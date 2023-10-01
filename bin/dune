@@ -1,0 +1,4 @@
+(executable
+ (public_name huffbro)
+ (name main)
+ (libraries huffbro))

@@ -12,7 +12,9 @@ let set_filename filename_parameter =
 
 let () = Arg.parse [] set_filename ""
 let ic = In_channel.open_bin !filename
-let file_contents_str = In_channel.input_all ic
+let file_contents_str =
+  let read_in = In_channel.input_all ic in
+  String.sub read_in 0 ((String.length read_in) - 1)
 
 let f a c =
   let is_equal leaf =
@@ -65,7 +67,7 @@ let rec huffin lst =
             | Internal { sum = s; _ }, Internal { sum = s2; _ } ->
                 Internal { sum = s + s2; left = hd; right = hd2 }
           in
-          huffin (internal :: tl)
+          huffin (tl @ [ internal ])
       | _ -> failwith "List cannot be length one here")
 
 let tree =

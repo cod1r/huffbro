@@ -77,6 +77,15 @@ let tree =
         ("List returned cannot be greater than length one: length is "
         ^ string_of_int (List.length huffed))
 
-let () = match tree with
-| Internal { sum=s;_ } -> print_endline (string_of_int s)
-| _ -> ()
+let rec get_codes tree str =
+  match tree with
+  | Internal { left = l; right = r; _ } ->
+      get_codes l (str ^ "0") @ get_codes r (str ^ "1")
+  | Leaf { symbol = s; _ } -> [ (s, str) ]
+
+let codes = get_codes tree ""
+
+let () =
+  List.iter
+    (fun p -> match p with s, c -> print_endline (Char.escaped s ^ " " ^ c))
+    codes

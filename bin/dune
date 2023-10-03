@@ -2,6 +2,3 @@
  (public_name huffbro)
  (name main)
  (libraries huffbro))
-(env
-  (dev
-    (flags (:standard -warn-error -A))))

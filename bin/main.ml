@@ -1,7 +1,6 @@
 type node =
   | Leaf of { symbol : char; frequency : int }
   | Internal of { sum : int; left : node; right : node }
-  | None
 
 let usage_msg = "Usage: huffbro <filename>"
 let filename = ref ""
@@ -35,12 +34,49 @@ let f a c =
           (Invalid_argument "Only Leafs should be passed into this function")
   else Leaf { symbol = c; frequency = 1 } :: a
 
-let nodes = String.fold_left f [] file_contents_str
+let leaves = String.fold_left f [] file_contents_str
 
-let print_leaf leaf =
-  match leaf with
-  | Leaf { symbol; frequency } ->
-      print_endline (Char.escaped symbol ^ " " ^ string_of_int frequency)
-  | _ -> ()
+let sort_nodes n1 n2 =
+  match n1 with
+  | Leaf { frequency = frequency1; _ } -> (
+      match n2 with
+      | Leaf { frequency = frequency2; _ } -> frequency1 - frequency2
+      | Internal { sum = sum2; _ } -> frequency1 - sum2)
+  | Internal { sum = sum1; _ } -> (
+      match n2 with
+      | Leaf { frequency = frequency2; _ } -> sum1 - frequency2
+      | Internal { sum = sum2; _ } -> sum1 - sum2)
 
-let () = List.iter print_leaf nodes
+let rec huffin lst =
+  match lst with
+  | [ _ ] -> lst
+  | _ -> (
+      let sorted_lst = List.sort sort_nodes lst in
+      match sorted_lst with
+      | hd :: hd2 :: tl ->
+          let internal =
+            match (hd, hd2) with
+            | Leaf { frequency = f; _ }, Leaf { frequency = f2; _ } ->
+                Internal { sum = f + f2; left = hd; right = hd2 }
+            | Leaf { frequency = f; _ }, Internal { sum = s; _ } ->
+                Internal { sum = s + f; left = hd; right = hd2 }
+            | Internal { sum = s; _ }, Leaf { frequency = f; _ } ->
+                Internal { sum = s + f; left = hd; right = hd2 }
+            | Internal { sum = s; _ }, Internal { sum = s2; _ } ->
+                Internal { sum = s + s2; left = hd; right = hd2 }
+          in
+          huffin (internal :: tl)
+      | _ -> failwith "List cannot be length one here")
+
+let tree =
+  let huffed = huffin leaves in
+  match huffin leaves with
+  | [ hd ] -> hd
+  | _ ->
+      failwith
+        ("List returned cannot be greater than length one: length is "
+        ^ string_of_int (List.length huffed))
+
+let () = match tree with
+| Internal { sum=s;_ } -> print_endline (string_of_int s)
+| _ -> ()
